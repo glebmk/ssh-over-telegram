@@ -17,7 +17,7 @@ def get_public_save_private_key(file_secret='private.key'):
 
     private_key = key.private_bytes(
         crypto_serialization.Encoding.PEM,
-        crypto_serialization.PrivateFormat.PKCS8,
+        crypto_serialization.PrivateFormat.TraditionalOpenSSL,
         crypto_serialization.NoEncryption())
 
     with open(file_secret, 'wb') as f:

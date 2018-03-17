@@ -5,7 +5,6 @@ import paramiko
 import threading
 
 FILE_SECRET = 'private.key'
-LINES_PER_MSG = 10
 
 
 def start(bot, update):
@@ -24,7 +23,7 @@ class Buffer:
         self._buffer = deque()
         self.timeout = timeout
         self._closed = False
-        self.thread = threading.Thread(target=self._start)
+        self.thread = threading.Thread(target=self._thread_work)
         self.thread.start()
 
     def append(self, line):
@@ -34,7 +33,7 @@ class Buffer:
         self._closed = True
         self.thread.join()
 
-    def _start(self):
+    def _thread_work(self):
         # runs in a separate thread
         while True:
             self._send_buffer()
@@ -50,8 +49,8 @@ class Buffer:
             self.bot.send_message(chat_id=self.chat_id, text=''.join(lines))
 
 
-def bash(bot, update):
-    client = get_client()
+def bash(bot, update, hostname):
+    client = get_client(hostname)
     _, stdout, _ = client.exec_command(update.message.text, get_pty=True)
     buffer = Buffer(bot, update.message.chat_id)
     for i, line in enumerate(iter(stdout.readline, '')):
@@ -61,11 +60,10 @@ def bash(bot, update):
     client.close()
 
 
-def get_client():
+def get_client(hostname):
     key = paramiko.RSAKey(filename=FILE_SECRET)
     client = paramiko.SSHClient()
     client.load_system_host_keys()
-    hostname = 'cb.skoltech.ru'
     client.get_host_keys().add(hostname, 'ssh-rsa', key)
     client.connect(hostname=hostname)
     return client

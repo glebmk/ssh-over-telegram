@@ -1,10 +1,8 @@
-from key_gen import get_public_save_private_key
+from security import get_public_save_private_key, get_client
 from time import sleep
 from collections import deque
-import paramiko
 import threading
-
-FILE_SECRET = 'private.key'
+from telegram.ext.dispatcher import run_async
 
 
 def start(bot, update):
@@ -12,7 +10,7 @@ def start(bot, update):
 
 
 def new_key(bot, update):
-    public = get_public_save_private_key(file_secret=FILE_SECRET)
+    public = get_public_save_private_key()
     bot.send_message(chat_id=update.message.chat_id, text=public.decode('utf-8'))
 
 
@@ -49,21 +47,18 @@ class Buffer:
             self.bot.send_message(chat_id=self.chat_id, text=''.join(lines))
 
 
-def bash(bot, update, hostname):
-    client = get_client(hostname)
-    _, stdout, _ = client.exec_command(update.message.text, get_pty=True)
+@run_async
+def cancel_signal(bot, update, client_holder, hostname):
+    client_holder[0].close()
+    client_holder[0] = get_client(hostname=hostname)
+    bot.send_message(chat_id=update.message.chat_id, text='### connection was reestablished')
+
+
+@run_async
+def shell(bot, update, client_holder):
+    _, stdout, _ = client_holder[0].exec_command(update.message.text, get_pty=True)
     buffer = Buffer(bot, update.message.chat_id)
     for i, line in enumerate(iter(stdout.readline, '')):
         buffer.append(line)
     buffer.close()
     bot.send_message(chat_id=update.message.chat_id, text='### finished')
-    client.close()
-
-
-def get_client(hostname):
-    key = paramiko.RSAKey(filename=FILE_SECRET)
-    client = paramiko.SSHClient()
-    client.load_system_host_keys()
-    client.get_host_keys().add(hostname, 'ssh-rsa', key)
-    client.connect(hostname=hostname)
-    return client

@@ -1,8 +1,9 @@
 import argparse
 import configparser
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, DispatcherHandlerStop
-from handlers import new_key, start, bash
+from handlers import new_key, start, cancel_signal, shell
 from functools import partial
+from security import get_client
 
 
 def parse_args():
@@ -40,6 +41,10 @@ if __name__ == '__main__':
 
     dispatcher.add_handler(CommandHandler('newkey', new_key))
 
-    dispatcher.add_handler(MessageHandler(Filters.text, partial(bash, hostname=hostname)))
+    client_holder = [get_client(hostname)]
+
+    dispatcher.add_handler(CommandHandler('c', partial(cancel_signal, client_holder=client_holder, hostname=hostname)))
+
+    dispatcher.add_handler(MessageHandler(Filters.text, partial(shell, client_holder=client_holder)))
 
     updater.start_polling()

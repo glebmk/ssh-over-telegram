@@ -45,6 +45,6 @@ if __name__ == '__main__':
 
     dispatcher.add_handler(CommandHandler('c', partial(cancel_signal, client_holder=client_holder, hostname=hostname)))
 
-    dispatcher.add_handler(MessageHandler(Filters.text, partial(shell, client_holder=client_holder)))
+    dispatcher.add_handler(MessageHandler(Filters.text, partial(shell, client_holder=client_holder, hostname=hostname)))
 
     updater.start_polling()

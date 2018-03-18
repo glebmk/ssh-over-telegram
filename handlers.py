@@ -6,8 +6,8 @@ from telegram.ext.dispatcher import run_async
 
 
 def start(bot, update):
-    text = "Hello. If you are new here or want to change you ssh key pair, run \\newkey. " \
-           "Please note that this command will overwrite previous private key."
+    text = "Hello. If you are new here or want to change your ssh key pair, run /newkey. " \
+           "Please note that this command will overwrite old private key."
     bot.send_message(chat_id=update.message.chat_id, text=text)
 
 
@@ -56,16 +56,29 @@ class Buffer:
 
 @run_async
 def cancel_signal(bot, update, client_holder, hostname):
+    if client_holder_is_bad(bot, update, client_holder, hostname):
+        return
     client_holder[0].close()
     client_holder[0] = get_client(hostname=hostname)
     bot.send_message(chat_id=update.message.chat_id, text='### connection was reestablished')
 
 
 @run_async
-def shell(bot, update, client_holder):
+def shell(bot, update, client_holder, hostname):
+    if client_holder_is_bad(bot, update, client_holder, hostname):
+        return
     _, stdout, _ = client_holder[0].exec_command(update.message.text, get_pty=True)
     buffer = Buffer(bot, update.message.chat_id)
     for i, line in enumerate(iter(stdout.readline, '')):
         buffer.append(line)
     buffer.close()
     bot.send_message(chat_id=update.message.chat_id, text='### finished')
+
+
+def client_holder_is_bad(bot, update, client_holder, hostname):
+    if client_holder[0] is None:
+        client_holder[0] = get_client(hostname)
+    if client_holder[0] is None:
+        bot.send_message(chat_id=update.message.chat_id, text='### some problem with the connection')
+        return True
+    return False

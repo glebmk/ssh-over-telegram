@@ -2,6 +2,7 @@ from cryptography.hazmat.primitives import serialization as crypto_serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
 import paramiko
+import os
 
 FILE_SECRET = 'private.key'
 
@@ -30,6 +31,8 @@ def get_public_save_private_key(file_secret=FILE_SECRET):
 
 
 def get_client(hostname):
+    if not os.path.exists(FILE_SECRET):
+        return None
     key = paramiko.RSAKey(filename=FILE_SECRET)
     client = paramiko.SSHClient()
     client.load_system_host_keys()

@@ -6,12 +6,19 @@ from telegram.ext.dispatcher import run_async
 
 
 def start(bot, update):
-    bot.send_message(chat_id=update.message.chat_id, text='Hello.')
+    text = "Hello. If you are new here or want to change you ssh key pair, run \\newkey. " \
+           "Please note that this command will overwrite previous private key."
+    bot.send_message(chat_id=update.message.chat_id, text=text)
 
 
 def new_key(bot, update):
     public = get_public_save_private_key()
     bot.send_message(chat_id=update.message.chat_id, text=public.decode('utf-8'))
+    text = "You have just received the public key. " \
+           "Private key was stored in the directory from which the bot is running. " \
+           "Please, add it to the authorized keys on the server. " \
+           "This can be done, by appending public key to server's authorized_keys file (~/.ssh/authorized_keys)."
+    bot.send_message(chat_id=update.message.chat_id, text=text)
 
 
 class Buffer:

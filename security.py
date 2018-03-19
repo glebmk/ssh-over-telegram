@@ -3,8 +3,10 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.backends import default_backend as crypto_default_backend
 import paramiko
 import os
+import logging
 
 FILE_SECRET = 'private.key'
+logger = logging.getLogger()
 
 
 def get_public_save_private_key(file_secret=FILE_SECRET):
@@ -27,15 +29,20 @@ def get_public_save_private_key(file_secret=FILE_SECRET):
     with open(file_secret, 'wb') as f:
         f.write(private_key)
 
+    os.chmod(file_secret, 0o0600)  # Set read and write permission for user only
+
     return public_key
 
 
 def get_client(hostname):
     if not os.path.exists(FILE_SECRET):
         return None
-    key = paramiko.RSAKey(filename=FILE_SECRET)
+    key = paramiko.RSAKey.from_private_key_file(filename=FILE_SECRET)
     client = paramiko.SSHClient()
-    client.load_system_host_keys()
     client.get_host_keys().add(hostname, 'ssh-rsa', key)
-    client.connect(hostname=hostname)
+    try:
+        client.connect(hostname=hostname)
+    except paramiko.ssh_exception.BadHostKeyException:
+        logger.error('BadHostKeyException', exc_info=True)
+        return None
     return client

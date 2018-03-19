@@ -5,6 +5,10 @@ from handlers import new_key, start, cancel_signal, shell
 from functools import partial
 from security import get_client
 
+import logging
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 
 def parse_args():
     parser = argparse.ArgumentParser()

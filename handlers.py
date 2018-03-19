@@ -3,15 +3,21 @@ from time import sleep
 from collections import deque
 import threading
 from telegram.ext.dispatcher import run_async
+import logging
+
+
+logger = logging.getLogger()
 
 
 def start(bot, update):
+    logger.info('Received start command')
     text = "Hello. If you are new here or want to change your ssh key pair, run /newkey. " \
            "Please note that this command will overwrite old private key."
     bot.send_message(chat_id=update.message.chat_id, text=text)
 
 
 def new_key(bot, update):
+    logger.info('Received newkey command')
     public = get_public_save_private_key()
     bot.send_message(chat_id=update.message.chat_id, text=public.decode('utf-8'))
     text = "You have just received the public key. " \
@@ -56,6 +62,7 @@ class Buffer:
 
 @run_async
 def cancel_signal(bot, update, client_holder, hostname):
+    logger.info('Received cancel signal command')
     if client_holder_is_bad(bot, update, client_holder, hostname):
         return
     client_holder[0].close()
@@ -65,6 +72,7 @@ def cancel_signal(bot, update, client_holder, hostname):
 
 @run_async
 def shell(bot, update, client_holder, hostname):
+    logger.info(f'Received shell command: {update.message.text}')
     if client_holder_is_bad(bot, update, client_holder, hostname):
         return
     _, stdout, _ = client_holder[0].exec_command(update.message.text, get_pty=True)
@@ -79,6 +87,7 @@ def client_holder_is_bad(bot, update, client_holder, hostname):
     if client_holder[0] is None:
         client_holder[0] = get_client(hostname)
     if client_holder[0] is None:
+        logger.warning('Some problem with connection')
         bot.send_message(chat_id=update.message.chat_id, text='### some problem with the connection')
         return True
     return False

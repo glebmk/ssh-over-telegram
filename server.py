@@ -43,7 +43,7 @@ if __name__ == '__main__':
 
     dispatcher.add_handler(CommandHandler('start', start))
 
-    dispatcher.add_handler(CommandHandler('newkey', new_key))
+    dispatcher.add_handler(CommandHandler('newkey', partial(new_key, hostname=hostname)))
 
     client_holder = [get_client(hostname)]
 

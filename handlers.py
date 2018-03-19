@@ -1,4 +1,4 @@
-from security import get_public_save_private_key, get_client
+from security import get_public_save_private_key, get_client, save_host_key
 from time import sleep
 from collections import deque
 import threading
@@ -16,9 +16,10 @@ def start(bot, update):
     bot.send_message(chat_id=update.message.chat_id, text=text)
 
 
-def new_key(bot, update):
+def new_key(bot, update, hostname):
     logger.info('Received newkey command')
     public = get_public_save_private_key()
+    save_host_key(hostname)
     bot.send_message(chat_id=update.message.chat_id, text=public.decode('utf-8'))
     text = "You have just received the public key. " \
            "Private key was stored in the directory from which the bot is running. " \

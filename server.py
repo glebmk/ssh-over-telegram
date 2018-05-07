@@ -25,30 +25,31 @@ def parse_args():
     config = configparser.ConfigParser()
     config.read_string(config_string)
 
-    cs = config['dummy_section']  # config section
-    return cs['tg_username'], cs['tg_bot_token'], cs['hostname']
+    to_return = ['tg_username', 'tg_bot_token', 'username', 'hostname', 'port']
+    return [config['dummy_section'][field] for field in to_return]
 
 
 if __name__ == '__main__':
-    username, tg_secret, hostname = parse_args()
+    tg_username, tg_secret, username, hostname, port = parse_args()
+    connection_info = (username, hostname, port)
 
     updater = Updater(token=tg_secret)
     dispatcher = updater.dispatcher
 
     def check_user(_, update):
-        if update.message.from_user.username != username:
+        if update.message.from_user.username != tg_username:
             raise DispatcherHandlerStop
 
     dispatcher.add_handler(MessageHandler(Filters.all, check_user), group=-1)
 
     dispatcher.add_handler(CommandHandler('start', start))
 
-    dispatcher.add_handler(CommandHandler('newkey', partial(new_key, hostname=hostname)))
+    dispatcher.add_handler(CommandHandler('newkey', partial(new_key)))
 
-    client_holder = [get_client(hostname)]
+    client_holder = [get_client(connection_info)]
 
-    dispatcher.add_handler(CommandHandler('c', partial(cancel_signal, client_holder=client_holder, hostname=hostname)))
+    dispatcher.add_handler(CommandHandler('c', partial(cancel_signal, client_holder=client_holder, connection_info=connection_info)))
 
-    dispatcher.add_handler(MessageHandler(Filters.text, partial(shell, client_holder=client_holder, hostname=hostname)))
+    dispatcher.add_handler(MessageHandler(Filters.text, partial(shell, client_holder=client_holder, connection_info=connection_info)))
 
     updater.start_polling()

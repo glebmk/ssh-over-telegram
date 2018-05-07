@@ -6,12 +6,12 @@ from paramiko.ssh_exception import BadHostKeyException, SSHException
 import os
 import logging
 
+PUBLIC_KEY = 'public.key'
 PRIVATE_KEY = 'private.key'
-HOST_KEY = 'host.key'
 logger = logging.getLogger()
 
 
-def get_public_save_private_key(file_secret=PRIVATE_KEY):
+def get_public_save_private_key():
     key = rsa.generate_private_key(
         backend=crypto_default_backend(),
         public_exponent=65537,
@@ -28,26 +28,29 @@ def get_public_save_private_key(file_secret=PRIVATE_KEY):
         crypto_serialization.PrivateFormat.TraditionalOpenSSL,
         crypto_serialization.NoEncryption())
 
-    with open(file_secret, 'wb') as f:
+    with open(PUBLIC_KEY, 'wb') as f:
+        f.write(public_key)
+
+    with open(PRIVATE_KEY, 'wb') as f:
         f.write(private_key)
 
-    os.chmod(file_secret, 0o0600)  # Set read and write permission for user only
+    # Set read and write permission for user only
+    os.chmod(PUBLIC_KEY, 0o0600)
+    os.chmod(PRIVATE_KEY, 0o0600)
 
     return public_key
 
 
-def save_host_key(hostname, file_secret=HOST_KEY):
-    os.system(f'ssh-keyscan {hostname} > {file_secret}')
-
-
-def get_client(hostname):
-    if not os.path.exists(PRIVATE_KEY) or not os.path.exists(HOST_KEY):
+def get_client(connection_info):
+    if not os.path.exists(PRIVATE_KEY):
         return None
     client = paramiko.SSHClient()
-    client.get_host_keys().load(HOST_KEY)
+
+    client.set_missing_host_key_policy(paramiko.AutoAddPolicy())  # TODO change it in future updates
 
     try:
-        client.connect(hostname=hostname, key_filename=PRIVATE_KEY, allow_agent=False, look_for_keys=False)
+        username, hostname, port = connection_info
+        client.connect(username=username, hostname=hostname, port=port, key_filename=PRIVATE_KEY, allow_agent=False, look_for_keys=False)
     except (BadHostKeyException, SSHException):
         logger.error(msg='Cannot establish connection', exc_info=True)
         return None

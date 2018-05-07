@@ -1,4 +1,4 @@
-from security import get_public_save_private_key, get_client, save_host_key
+from security import get_public_save_private_key, get_client
 from time import sleep
 from collections import deque
 import threading
@@ -16,10 +16,9 @@ def start(bot, update):
     bot.send_message(chat_id=update.message.chat_id, text=text)
 
 
-def new_key(bot, update, hostname):
+def new_key(bot, update):
     logger.info('Received newkey command')
     public = get_public_save_private_key()
-    save_host_key(hostname)
     bot.send_message(chat_id=update.message.chat_id, text=public.decode('utf-8'))
     text = "You have just received the public key. " \
            "Private key was stored in the directory from which the bot is running. " \
@@ -62,19 +61,19 @@ class Buffer:
 
 
 @run_async
-def cancel_signal(bot, update, client_holder, hostname):
+def cancel_signal(bot, update, client_holder, connection_info):
     logger.info('Received cancel signal command')
-    if client_holder_is_bad(bot, update, client_holder, hostname):
+    if client_holder_is_bad(bot, update, client_holder, connection_info):
         return
     client_holder[0].close()
-    client_holder[0] = get_client(hostname=hostname)
+    client_holder[0] = get_client(connection_info)
     bot.send_message(chat_id=update.message.chat_id, text='### connection was reestablished')
 
 
 @run_async
-def shell(bot, update, client_holder, hostname):
+def shell(bot, update, client_holder, connection_info):
     logger.info(f'Received shell command: {update.message.text}')
-    if client_holder_is_bad(bot, update, client_holder, hostname):
+    if client_holder_is_bad(bot, update, client_holder, connection_info):
         return
     _, stdout, _ = client_holder[0].exec_command(update.message.text, get_pty=True)
     buffer = Buffer(bot, update.message.chat_id)
@@ -84,9 +83,9 @@ def shell(bot, update, client_holder, hostname):
     bot.send_message(chat_id=update.message.chat_id, text='### finished')
 
 
-def client_holder_is_bad(bot, update, client_holder, hostname):
+def client_holder_is_bad(bot, update, client_holder, connection_info):
     if client_holder[0] is None:
-        client_holder[0] = get_client(hostname)
+        client_holder[0] = get_client(connection_info)
     if client_holder[0] is None:
         logger.warning('Some problem with connection')
         bot.send_message(chat_id=update.message.chat_id, text='### some problem with the connection')

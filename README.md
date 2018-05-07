@@ -28,7 +28,9 @@ Config file should contain three fields:
 For security reasons, your bot will answer to you only and 
 this field is how bot knows who is it's only client.
 * tg_bot_token: token provided to you by BotFather
-* hostname: hostname of the server your bot should ssh into.
+* username [optional]: the name of the user on server
+* hostname: hostname of the server
+* port [optional]: port to connect to
 
 For the example, consult `config_example`. 
 **Be careful not to post your config file anywhere as it will 

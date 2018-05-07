@@ -8,6 +8,7 @@ from security import get_client
 import logging
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger()
 
 
 def parse_args():
@@ -25,13 +26,21 @@ def parse_args():
     config = configparser.ConfigParser()
     config.read_string(config_string)
 
-    to_return = ['tg_username', 'tg_bot_token', 'username', 'hostname', 'port']
-    return [config['dummy_section'][field] for field in to_return]
+    cs = config['dummy_section']  # config section
+    to_return = [
+        cs['tg_username'],
+        cs['tg_bot_token'],
+        cs.get('username', None),
+        cs['hostname'],
+        cs.get('port', 22)
+    ]
+    return to_return
 
 
 if __name__ == '__main__':
     tg_username, tg_secret, username, hostname, port = parse_args()
     connection_info = (username, hostname, port)
+    logger.info('Connection info:', connection_info)
 
     updater = Updater(token=tg_secret)
     dispatcher = updater.dispatcher

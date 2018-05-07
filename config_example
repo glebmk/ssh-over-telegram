@@ -1,3 +1,5 @@
 tg_username = telegramusername
 tg_bot_token = 83623606:TDKGLJDKJLQLJ_ldhjfaFh34DLJfalhjo54jl
+username = user23
 hostname = your.server.com
+port = 40124

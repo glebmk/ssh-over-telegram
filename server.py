@@ -42,10 +42,10 @@ if __name__ == '__main__':
     connection_info = (username, hostname, port)
     logger.info('Connection info:', connection_info)
 
-    updater = Updater(token=tg_secret)
+    updater = Updater(token=tg_secret, use_context=True)
     dispatcher = updater.dispatcher
 
-    def check_user(_, update):
+    def check_user(update, context):
         if update.message.from_user.username != tg_username:
             raise DispatcherHandlerStop
 
